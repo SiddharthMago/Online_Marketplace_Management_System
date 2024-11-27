@@ -1,86 +1,158 @@
-### Run
+### TO RUN
 
+Update the main code with your username and password -
+```c
+# Start the program
+if __name__ == "__main__":
+    try:
+        username = "username"
+        password = "password"
+        db = "Online_Marketplace_Management"
 
+        con = pymysql.connect(
+            host='localhost',
+            port=3306,
+            user=username,
+            password=password,
+            db=db,
+            cursorclass=pymysql.cursors.DictCursor
+        )
 
-### PyMySQL
+        if con.open:
+            print("Connected to the database.")
 
-It is recommended that you use PyMySQL. You CANNOT use Pandas or any other Python library for the project. PyMySQL is an interface for connection to the MySQL server from Python.
-
-To install PyMySQL, you can use one of the two routes  
-
-### Pip
-
-``` bash
-pip install PyMySQL
+        with con.cursor() as cur:
+            main_menu()
 ```
 
-### Conda
-
-``` bash
-conda install -c anaconda pymysql
+Download the database using the Dump.sql -
+```c
+mysql -u username -p Online_Marketplace_Management < Dump.sql
 ```
 
-## Boilerplate
-
-We have provided a boilerplate piece of code just to get you started. The only reason this boiler plate is being shared is to show you what an acceptable UI looks like. You can decide to not use the boilerplate if you feel that you have already implemented a similar flow for your application.
-
-### To Run
-
-To run the boilerplate code, you will need to login with your MySQL username and password (the boilerplate code has the username, password, and port hardcoded to work with the Docker installation instructions).
-
-``` bash
+Run the program - 
+```c
 python3 boilerPlate.py
 ```
+##
 
-This will prompt for you to enter your username and password.
+### COMMANDS
 
-### UI Interface
+#### Seller Commands:
+1. ADD or UPDATE a product for a particular seller - if entry with seller provided product_id and SKU exists then instead of adding we update that entry. Else we simply add a new product tuple.
 
-Due to the timeline, you are not expected to implement a graphical UI (although you aren't disallowed either). A CLI (Command Line Interface) will suffice for the sake of the project.
+    ```c
+    INSERT INTO Product (product_id, SKU, name, price, stock, seller_id, category_id)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    ON DUPLICATE KEY UPDATE
+    name = %s, price = %s, stock = %s, category_id = %s;
+    ```
 
-You can also have different interfaces depending on which kind of user logged in to your software. Taking here the example of the EMPLOYEE Database, under the assumption that someone from adminstration logged into, the UI will look something like this.
+2. DELETE product for a particular seller - 
 
-```
-1. Hire a new employee
-2. Fire an employee 
-3. Promote an employee
-4. Employee Statistics
-5. Logout
+    ```c
+    DELETE FROM Product WHERE product_id = %s AND SKU = %s AND seller_id = %s;
+    ```
 
-Enter Choice > 
-```
+3. VIEW all products of a particular seller and VIEW product_reviews for products of a particular seller -
 
-The boiler plate has a similar interface. Only one function has been implemented in the code provided. But it's enough to give you an idea about what you have to do.
+    ```c
+    SELECT product_id, name FROM Product WHERE seller_id = %s;
 
-### Error Handling
+    SELECT pr.review_id, pr.customer_id, pr.rating, pr.comment, pr.review_date
+    FROM Product_Review pr
+    WHERE pr.product_id = %s;
+    ```
 
-Although in this code, error handling hasn't explicitly been handled, you have to handle errors appropriately.  
+#### Customer Commands:
+1. VIEW all products -
 
-For example, if you try to delete a department, you can only do so after you've reassigned all the employess to another department. Or if you want to fire the manager of a department, you can only do so after assigning the department a new manager (where again, yes, the manager has to satisfy the foreign key constrain i.e. should be an employee himself)
+    ```c
+    SELECT * FROM Product;
+    ```
 
-Instead of handling all the errors yourself, you can make use of error messages which MySQL returns. [You might find this useful to implement when you want to debug as well](https://stackoverflow.com/questions/25026244/how-to-get-the-mysql-type-of-error-with-pymysql).
+2. VIEW product review for a particular product -
 
-``` python
-try:
-    do_stuff()
-except Exception as e:
-    print (e)
-```
+    ```c
+    SELECT pr.review_id, pr.customer_id, pr.rating, pr.comment, pr.review_date
+    FROM Product_Review pr
+    WHERE pr.product_id = %s;
+    ```
 
-## Creating Dump File For MySQL
+3. VIEW all customer orders -
 
-The database dump file can be created using
+    ```c
+    SELECT o.order_id, o.transaction_id, o.rating, o.order_date, o.order_status
+    FROM Orders o
+    WHERE o.ordered_by = %s;
+    ```
 
-``` bash
-mysqldump -u username -p databasename > filename.sql
-```
+#### Manager Commands:
+1. UPDATE customer details -
 
+    ```c
+    UPDATE Customer
+    SET name = %s, email = %s, street = %s, city = %s, state = %s, zip = %s
+    WHERE customer_id = %s;
+    ```
 
-## Resources
+2. UPDATE seller details -
 
-* https://www.python.org/dev/peps/pep-0249/
-* https://dev.mysql.com/doc/connector-python/en/
-* http://zetcode.com/python/pymysql/
-* https://www.tutorialspoint.com/python3/python_database_access.htm
-* https://o7planning.org/en/11463/connecting-mysql-database-in-python-using-pymysql
-* https://www.journaldev.com/15539/python-mysql-example-tutorial
+    ```c
+    UPDATE Seller
+    SET name = %s, street = %s, city = %s, state = %s, zip = %s, rating = %s
+    WHERE seller_id = %s;
+    ```
+
+3. ADD or UPDATE premium seller details - if entry with provided seller_id exists then instead of adding we update that entry. Else we simply add a new premium seller tuple.
+
+    ```c
+    INSERT INTO Premium_Seller (seller_id, premium_since, tier, commission_rate)
+    VALUES (%s, %s, %s, %s);
+
+    UPDATE Premium_Seller
+    SET tier = %s, commission_rate = %s
+    WHERE seller_id = %s;
+    ```
+
+4. VIEW sales statistics - Product sales by volume per category.
+
+    ```c
+    SELECT c.name AS category_name, SUM(oi.quantity * oi.unit_price) AS total_sales
+    FROM Order_Item oi
+    JOIN Product p ON oi.product_id = p.product_id
+    JOIN Category c ON p.category_id = c.category_id
+    GROUP BY c.category_id;
+    ```
+
+5. UPDATE promotions - Wasnt available in video, have added a function for that.
+
+    ```c
+    UPDATE Promotion
+    SET description = %s, start_date = %s, end_date = %s
+    WHERE promotion_id = %s;
+    ```
+
+6. UPDATE discount codes -
+
+    ```c
+    UPDATE Discount_Code
+    SET type = %s, value = %s, expiry = %s
+    WHERE code = %s;
+    ```
+
+##
+
+### ERROR HANDLING
+
+1. Check for valid Customer, Seller and Manager IDs before further execution.
+
+2. Check if any query is invalid before printing output and informing user accordingly.
+
+3. Checks and handles for sellers updating/viewing data of other sellers.
+
+4. Customer can only see necessary seller information.
+
+5. Program doesnt quit unexpectedly while execution.
+
+6. Error handling for initial pymysql connection setup.
