@@ -825,8 +825,8 @@ def view_sales_statistics():
 # Start the program
 if __name__ == "__main__":
     try:
-        username = "root"
-        password = "siddharthmago28"
+        username = "username"
+        password = "password"
         db = "Online_Marketplace_Management"
 
         con = pymysql.connect(

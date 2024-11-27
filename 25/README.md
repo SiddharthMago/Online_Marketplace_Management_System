@@ -1,8 +1,6 @@
-## Installation Instructions
+### Run
 
-### MySQL
 
-To install and run MySQL on a Docker container, follow the instructions that were previously given.
 
 ### PyMySQL
 
