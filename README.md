@@ -64,6 +64,13 @@ python3 boilerPlate.py
     WHERE pr.product_id = %s;
     ```
 
+    Commands that were not run but have been implemented -
+
+    4. Add Product Image
+    5. Delete Product Image
+    6. Add Promotion
+    7. Delete Promotion
+
 #### Customer Commands:
 1. VIEW all products -
 
@@ -85,7 +92,13 @@ python3 boilerPlate.py
     SELECT o.order_id, o.transaction_id, o.rating, o.order_date, o.order_status
     FROM Orders o
     WHERE o.ordered_by = %s;
-    ```
+    ```   
+
+    Commands that were not run but have been implemented -
+
+    4. View Seller Details
+    5. View Product Images
+    6. View Promotions
 
 #### Manager Commands:
 1. UPDATE customer details -
